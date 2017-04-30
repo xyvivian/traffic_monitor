@@ -1,4 +1,3 @@
-# CS 3281 Section 2 - Operating Systems 
 # Final Project #2: Network Firewall Module
 # Project Final Report
 
