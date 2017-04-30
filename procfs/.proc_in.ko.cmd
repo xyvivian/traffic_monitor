@@ -1,0 +1,1 @@
+cmd_/home/vagrant/Desktop/tao-xueying_project/procfs/proc_in.ko := ld -r -m elf_x86_64 -T ./scripts/module-common.lds --build-id  -o /home/vagrant/Desktop/tao-xueying_project/procfs/proc_in.ko /home/vagrant/Desktop/tao-xueying_project/procfs/proc_in.o /home/vagrant/Desktop/tao-xueying_project/procfs/proc_in.mod.o

@@ -1,0 +1,4 @@
+kernel//home/vagrant/Desktop/tao-xueying_project/procfs/proc_all.ko
+kernel//home/vagrant/Desktop/tao-xueying_project/procfs/proc_in.ko
+kernel//home/vagrant/Desktop/tao-xueying_project/procfs/proc_mo.ko
+kernel//home/vagrant/Desktop/tao-xueying_project/procfs/proc_out.ko

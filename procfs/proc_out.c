@@ -45,6 +45,13 @@ temp = len;
 return count;
 }
 
+static const struct file_operations proc_fops = {
+        .owner = THIS_MODULE,
+        .read = read_proc,
+        .write = write_proc,
+};
+
+
 //create a new proc file entry.
 void
 create_new_proc_entry (void)

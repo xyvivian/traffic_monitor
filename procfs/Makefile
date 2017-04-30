@@ -1,7 +1,10 @@
-obj-m += proc_all.c proc_in.c proc_mo.c proc_out.c
+obj-m := proc_all.o proc_in.o proc_mo.o proc_out.o
 
-all:
-	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
+KERNELDIR ?= /lib/modules/$(shell uname -r)/build
 
+PWD := $(shell pwd)
+
+default:
+	$(MAKE) -C $(KERNELDIR) M=$(PWD) modules
 clean:
-	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean
+	$(MAKE) -C $(KERNELDIR) M=$(PWD) clean
