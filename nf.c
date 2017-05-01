@@ -41,6 +41,9 @@ bool blockOutgoing = false;
 bool blockAll = false;
 bool blockAllO = false;
 
+
+//three lists tracking the ips in incoming,outgoing,monitor
+//also, the size is specified.
 int MAXMUM = 20;
 char *in_traffic[20];
 size_t in_index;
@@ -77,11 +80,13 @@ void quit_list(size_t index, int i) {
 }
 
 //allow writing from the user space to kernel space.
+//this is for user to allow block all outgoing
 static ssize_t
 write_proc0 (struct file *filp, const char __user * buf, size_t count,
         loff_t * offp)
 {
 
+printk(KERN_INFO "Writing from user to blocko\n");
 // you have to move data from user space to kernel buffer
 copy_from_user (msg0, buf, count);
 strim(msg0);
@@ -93,11 +98,13 @@ return count;
 
 
 //allow writing from the user space to kernel space.
+//this is for user to allow block all incoming
 static ssize_t
 write_proc1 (struct file *filp, const char __user * buf, size_t count,
         loff_t * offp)
 {
 
+printk(KERN_INFO "Writing from user to block\n");
 // you have to move data from user space to kernel buffer
 copy_from_user (msg1, buf, count);
 strim(msg1);
@@ -108,13 +115,17 @@ return count;
 }
 
 //allow writing from the user space to kernel space.
+//this allows user to block a specific address
+//also, if the address is typed twice, it is removed from the blocking list
 static ssize_t
 write_proc2 (struct file *filp, const char __user * buf, size_t count,
         loff_t * offp)
 {
+
 size_t index;
 bool hasSameIn;
 
+printk(KERN_INFO "Writing from user to inc\n");
 // you have to move data from user space to kernel buffer
 copy_from_user (msg2, buf, count);
 strim(msg2);
@@ -144,12 +155,16 @@ return count;
 }
 
 //allow writing from the user space to kernel space.
+//this allows user to block a specific address
+//also, if the address is typed twice, it is removed from the blocking list
 static ssize_t
 write_proc3 (struct file *filp, const char __user * buf, size_t count,
         loff_t * offp)
 {
+
 size_t index;
 bool hasSameOut;
+printk(KERN_INFO "Writing from user to outg\n");
 // you have to move data from user space to kernel buffer
 copy_from_user (msg3, buf, count);
 strim(msg3);
@@ -176,6 +191,8 @@ return count;
 }
 
 //allow writing from the user space to kernel space.
+//this allows user to monitor a specific address
+//also, if the address is typed twice, it is removed from the monitor list
 static ssize_t
 write_proc4 (struct file *filp, const char __user * buf, size_t count,
         loff_t * offp)
@@ -184,6 +201,7 @@ write_proc4 (struct file *filp, const char __user * buf, size_t count,
 bool hasSameMo;
 size_t index;
 // you have to move data from user space to kernel buffer
+printk(KERN_INFO "Writing from user to monitor\n");
 copy_from_user (msg4, buf, count);
 strim(msg4);
 msg4[count] = '\0';
@@ -202,33 +220,43 @@ if (!hasSameMo) {
          printk(KERN_INFO "Too many ips on the list\n");
          return -1;
      }
-     out_traffic[out_index] = kmalloc(count * sizeof(char), GFP_KERNEL);
-     strcpy(out_traffic[out_index], msg4);
-     out_index++;
+     monitor_list[monitor_index] = kmalloc(count * sizeof(char), GFP_KERNEL);
+     strcpy(monitor_list[monitor_index], msg4);
+     monitor_index++;
     }
 return count;
 }
 
+//proc ops defined for creating proc entry
+//linking the proc write to those struct
 static const struct file_operations proc_fops0 = {
         .owner = THIS_MODULE,
         .write = write_proc0,
 };
 
+//proc ops defined for creating proc entry
+//linking the proc write to those struct
 static const struct file_operations proc_fops1 = {
         .owner = THIS_MODULE,
         .write = write_proc1,
 };
 
+//proc ops defined for creating proc entry
+//linking the proc write to those struct
 static const struct file_operations proc_fops2 = {
         .owner = THIS_MODULE,
         .write = write_proc2,
 };
 
+//proc ops defined for creating proc entry
+//linking the proc write to those struct
 static const struct file_operations proc_fops3 = {
         .owner = THIS_MODULE,
         .write = write_proc3,
 };
 
+//proc ops defined for creating proc entry
+//linking the proc write to those struct
 static const struct file_operations proc_fops4 = {
         .owner = THIS_MODULE,
         .write = write_proc4,
@@ -236,6 +264,7 @@ static const struct file_operations proc_fops4 = {
 
 
 //print pakage info
+//including number of packets recevied,accpted and blocked
 unsigned int printInfo(void) {
     int i;
     for (i = 0; i < monitor_index; i++) {
@@ -253,10 +282,10 @@ unsigned int printInfo(void) {
 
 //function to be called by hook
 //This will enable the user to
-// 1.block in/outcoming traffic by checking info from proc_all
-// 2.filter the specific address' incoming traffic from proc_in
-// 3.filter the specific address' outcoming traffic from proc_out
-// 4. monitor the num packages by proc_mo.
+// 1.block all incoming traffic
+// 2.filter the specific address' incoming traffic from traffic_in
+// 3.filter the specific address' outcoming traffic from traffic_out
+// 4. monitor the num packages by monitor_list.
 unsigned int hook_funcIn(void *priv, struct sk_buff *skb, const struct nf_hook_state *state) {
     //update the source and dest
     size_t index;
@@ -288,17 +317,15 @@ unsigned int hook_funcIn(void *priv, struct sk_buff *skb, const struct nf_hook_s
 
     if (blockIncome) {
         for (i = 0; i < in_index; i++) {
-            if (strcmp(source, in_traffic[i]) == 0) {
+            if (strncmp(source, in_traffic[i], 30) == 0) {
                 for (index = 0; index < monitor_index; index++) {
-                    if (strncmp(source, monitor_list[index],30) == 0) {
+                    if (strncmp(source, monitor_list[index], 30) == 0) {
                         count_blocked[index]++;
                     }
-
-                    printk(KERN_INFO
-                    "Incoming Packet is blocked\n");
-                    printInfo();
-                    return NF_DROP;
                 }
+                printk(KERN_INFO "Incoming Packet is blocked\n");
+                printInfo();
+                return NF_DROP;
             }
         }
     }
@@ -309,9 +336,11 @@ unsigned int hook_funcIn(void *priv, struct sk_buff *skb, const struct nf_hook_s
     return NF_ACCEPT;
 }
 
+
+//this allows user to block all outgoing traffic
+//or to block from a specific IP.
 unsigned int hook_funcOut(void *priv, struct sk_buff *skb, const struct nf_hook_state *state) {
     //update the source and dest
-    size_t index;
     size_t i;
     char source[20], dest[20];
     sock_buff = skb;
@@ -319,41 +348,26 @@ unsigned int hook_funcOut(void *priv, struct sk_buff *skb, const struct nf_hook_
     snprintf(source, 20, "%pI4", &ip_header->saddr);
     snprintf(dest, 20, "%pI4", &ip_header->daddr);
 
-    //update the receive information
-    for (index = 0; index < monitor_index; index++) {
-        if (strncmp(source, monitor_list[index],30) == 0) {
-            count_received[index]++;
-        }
-    }
-
     if (blockAllO) {
-        for (index = 0; index < monitor_index; index++) {
-            if (strncmp(source, monitor_list[index],30) == 0) {
-                count_blocked[index]++;
-                break;
-            }
-        }
         printk(KERN_INFO "All packets are blocked.\n");
         printInfo();
         return NF_DROP;
     }
     if (blockOutgoing) {
         for (i = 0; i < out_index; i++) {
-            if (strcmp(dest, out_traffic[i]) == 0) {
-                printk(KERN_INFO
-                "Outgoing Packet is blocked \n");
+            if (strncmp(dest, out_traffic[i], 30) == 0) {
+                printk(KERN_INFO "Outgoing Packet is blocked \n");
                 printInfo();
                 return NF_DROP;
             }
         }
     }
-    printk(KERN_INFO
-    "Incoming Packet is accepted\n");
+    printk(KERN_INFO "Outgoing Packet is emitted\n");
     printInfo();
     return NF_ACCEPT;
 }
 
-//create a new proc file entry.
+//create several new proc file entries
 void
 create_new_proc_entry (void)
 {
@@ -417,6 +431,7 @@ int init_module() {
 
 
 //Called when module unloaded using 'rmmod'
+//this will also free up memories
 void cleanup_module() {
     size_t index = 0;
     kfree(msg0);
