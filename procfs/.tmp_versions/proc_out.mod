@@ -1,2 +1,2 @@
-/home/vagrant/Desktop/tao-xueying_project/procfs/proc_out.ko
-/home/vagrant/Desktop/tao-xueying_project/procfs/proc_out.o
+/home/vagrant/Desktop/project/tao-xueying_project/procfs/proc_out.ko
+/home/vagrant/Desktop/project/tao-xueying_project/procfs/proc_out.o

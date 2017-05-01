@@ -1,4 +1,4 @@
-obj-m := proc_all.o proc_in.o proc_mo.o proc_out.o
+obj-m := proc_all.o proc_in.o proc_out.o proc_mo.o
 
 KERNELDIR ?= /lib/modules/$(shell uname -r)/build
 
