@@ -269,14 +269,14 @@ unsigned int hook_funcIn(void *priv, struct sk_buff *skb, const struct nf_hook_s
 
     //update the receive information
     for (index = 0; index < monitor_index; index++) {
-        if (strcmp(source, monitor_list[index]) == 0) {
+        if (strncmp(source, monitor_list[index],30) == 0) {
             count_received[index]++;
         }
     }
 
     if (blockAll) {
         for (index = 0; index < monitor_index; index++) {
-            if (strcmp(source, monitor_list[index]) == 0) {
+            if (strncmp(source, monitor_list[index],30) == 0) {
                 count_blocked[index]++;
                 break;
             }
@@ -290,7 +290,7 @@ unsigned int hook_funcIn(void *priv, struct sk_buff *skb, const struct nf_hook_s
         for (i = 0; i < in_index; i++) {
             if (strcmp(source, in_traffic[i]) == 0) {
                 for (index = 0; index < monitor_index; index++) {
-                    if (strcmp(source, monitor_list[index]) == 0) {
+                    if (strncmp(source, monitor_list[index],30) == 0) {
                         count_blocked[index]++;
                     }
 
@@ -321,14 +321,14 @@ unsigned int hook_funcOut(void *priv, struct sk_buff *skb, const struct nf_hook_
 
     //update the receive information
     for (index = 0; index < monitor_index; index++) {
-        if (strcmp(source, monitor_list[index]) == 0) {
+        if (strncmp(source, monitor_list[index],30) == 0) {
             count_received[index]++;
         }
     }
 
     if (blockAllO) {
         for (index = 0; index < monitor_index; index++) {
-            if (strcmp(source, monitor_list[index]) == 0) {
+            if (strncmp(source, monitor_list[index],30) == 0) {
                 count_blocked[index]++;
                 break;
             }
