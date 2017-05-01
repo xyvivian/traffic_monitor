@@ -57,17 +57,21 @@ int count_blocked[20];
 // 2: incoming
 // 3: outgoing
 void quit_list(size_t index, int i) {
+    char * temp;
     if (i == 1) {
-        kfree(in_traffic[index]);
+        temp = in_traffic[index];
         in_traffic[index] = in_traffic[in_index - 1];
+        kfree(temp);
         in_index--;
     } else if (i == 2) {
-        kfree(out_traffic[index]);
+        temp = out_traffic[index];
         out_traffic[index] = out_traffic[out_index - 1];
+        kfree(temp);
         out_index--;
     } else if (i == 3) {
-        kfree(monitor_list[index]);
+        temp = monitor_list[monitor_index - 1];
         monitor_list[index] = monitor_list[monitor_index - 1];
+        kfree(temp);
         monitor_index--;
     }
 }
@@ -81,7 +85,7 @@ write_proc0 (struct file *filp, const char __user * buf, size_t count,
 // you have to move data from user space to kernel buffer
 copy_from_user (msg0, buf, count);
 strim(msg0);
-msg0 = '\0';
+msg0[count] = '\0';
 
 blockAllO =true;
 return count;
@@ -97,7 +101,7 @@ write_proc1 (struct file *filp, const char __user * buf, size_t count,
 // you have to move data from user space to kernel buffer
 copy_from_user (msg1, buf, count);
 strim(msg1);
-msg1 = '\0';
+msg1[count] = '\0';
 
 blockAll =true;
 return count;
@@ -114,14 +118,14 @@ bool hasSameIn;
 // you have to move data from user space to kernel buffer
 copy_from_user (msg2, buf, count);
 strim(msg2);
-msg2 = '\0';
+msg2[count] = '\0';
 
 blockIncome = true;
 hasSameIn = false;
 
 //check if we have the same ip before, if so, call quit.
 for (index = 0; index < in_index; index++) {
-    if (strcmp(in_traffic[index], msg2) == 0) {
+    if (strncmp(in_traffic[index], msg2, 30) == 0) {
         hasSameIn = true;
         quit_list(index, 1);
     }
@@ -149,12 +153,12 @@ bool hasSameOut;
 // you have to move data from user space to kernel buffer
 copy_from_user (msg3, buf, count);
 strim(msg3);
-msg3 = '\0';
+msg3[count] = '\0';
 blockOutgoing = true;
 hasSameOut = false;
 //check if we have the same ip before, if so, call quit.
    for (index = 0; index < out_index; index++) {
-      if (strcmp(out_traffic[index], msg3) == 0) {
+      if (strncmp(out_traffic[index], msg3, 30) == 0) {
       hasSameOut = true;
       quit_list(index, 2);
    }
@@ -182,11 +186,11 @@ size_t index;
 // you have to move data from user space to kernel buffer
 copy_from_user (msg4, buf, count);
 strim(msg4);
-msg4 = '\0';
+msg4[count] = '\0';
 hasSameMo = false;
 //check if we have the same ip before, if so, call quit.
 for (index = 0; index < monitor_index; index++) {
-     if (strcmp(monitor_list[index], msg4) == 0) {
+     if (strncmp(monitor_list[index], msg4, 30) == 0) {
          quit_list(index, 3);
          count_received[index] = count_received[index - 1];
          count_blocked[index] = count_blocked[index - 1];
